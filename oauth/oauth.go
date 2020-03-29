@@ -7,6 +7,7 @@ import (
 	"github.com/KestutisKazlauskas/go-oauth/errors"
 	"github.com/federicoleon/golang-restclient/rest"
 	"encoding/json"
+	"fmt"
 )
 
 const (
@@ -18,16 +19,16 @@ const (
 )
 
 var (
-	oauthRestClient = rest.ReQuestBuilder{
+	oauthRestClient = rest.RequestBuilder{
 		BaseURL: "http://localhost:8080",
-		TimeOut: 200 * time.Millisecond,
+		Timeout: 200 * time.Millisecond,
 	}
 )
 
 type accessToken struct {
 	Id string `json:"id"`
 	UserId int64 `json:"user_id"`
-	ClienId int64 `json:"client_id"`
+	ClientId int64 `json:"client_id"`
 }
 
 func IsPublic(request *http.Request) bool {
@@ -38,9 +39,9 @@ func IsPublic(request *http.Request) bool {
 	return request.Header.Get(headerXPublic) == "true"
 }
 
-func GetUserId() int64 {
+func GetUserId(request *http.Request) int64 {
 	if request == nil {
-		return nil 
+		return 0
 	}
 
 	userId, err := strconv.ParseInt(request.Header.Get(headerXUserId), 10, 64)
@@ -51,9 +52,9 @@ func GetUserId() int64 {
 	return userId
 }
 
-func GetClienId() int64 {
+func GetClienId(request *http.Request) int64 {
 	if request == nil {
-		return nil 
+		return 0
 	}
 
 	clientId, err := strconv.ParseInt(request.Header.Get(headerXClientId), 10, 64)
@@ -67,12 +68,12 @@ func GetClienId() int64 {
 
 func Authenticate(request *http.Request) *errors.RestErr {
 	if request == nil {
-		return 0
+		return nil
 	}
 
 	cleanRequest(request)
 
-	accessTokenId = request.URL.Query().Get(paramAccessToken)
+	accessTokenId := request.URL.Query().Get(paramAccessToken)
 
 	if accessTokenId == "" {
 		return nil 
@@ -80,11 +81,14 @@ func Authenticate(request *http.Request) *errors.RestErr {
 
 	accessToken, err := getAccessToken(accessTokenId)
 	if err != nil {
+		if err.Status == http.StatusNotFound {
+			return nil
+		}
 		return err
 	}
 
-	request.Header.Add(headerXUserId, fmt.Sprinf("%v",accessToken.UserId))
-	request.Header.Add(headerXClientId, fmt.Sprinf("%v",accessToken.ClientId))
+	request.Header.Add(headerXUserId, fmt.Sprintf("%v",accessToken.UserId))
+	request.Header.Add(headerXClientId, fmt.Sprintf("%v",accessToken.ClientId))
 
 	return nil
 } 
@@ -99,7 +103,7 @@ func cleanRequest(request *http.Request) {
 }
 
 func getAccessToken(accessTokenId string)(*accessToken, *errors.RestErr) {
-	response := oauthRestClient.Get("/oauth/access_token/%s", accessTokenId)
+	response := oauthRestClient.Get(fmt.Sprintf("/oauth/access_token/%s", accessTokenId))
 
 	//Tiemout happens
 	if response == nil || response.Response == nil {
