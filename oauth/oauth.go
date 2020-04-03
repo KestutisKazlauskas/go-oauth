@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 	"strconv"
-	"github.com/KestutisKazlauskas/go-oauth/errors"
+	"github.com/KestutisKazlauskas/go-utils/rest_errors"
 	"github.com/federicoleon/golang-restclient/rest"
 	"encoding/json"
 	"fmt"
@@ -66,7 +66,7 @@ func GetClienId(request *http.Request) int64 {
 
 }
 
-func Authenticate(request *http.Request) *errors.RestErr {
+func Authenticate(request *http.Request) *rest_errors.RestErr {
 	if request == nil {
 		return nil
 	}
@@ -102,20 +102,20 @@ func cleanRequest(request *http.Request) {
 	request.Header.Del(headerXUserId)
 }
 
-func getAccessToken(accessTokenId string)(*accessToken, *errors.RestErr) {
+func getAccessToken(accessTokenId string)(*accessToken, *rest_errors.RestErr) {
 	response := oauthRestClient.Get(fmt.Sprintf("/oauth/access_token/%s", accessTokenId))
 
 	//Tiemout happens
 	if response == nil || response.Response == nil {
-		return nil, errors.NewInternalServerError("Timeout on oauth api.", nil)
+		return nil, rest_errors.NewInternalServerError("Timeout on oauth api.", nil, nil)
 	}
 
 	//Some errors hapens
 	if response.StatusCode > 299 {
-		var restErr errors.RestErr
+		var restErr rest_errors.RestErr
 		err := json.Unmarshal(response.Bytes(), &restErr)
 		if err != nil {
-			return nil, errors.NewInternalServerError("Cant parse the error.", nil)
+			return nil, rest_errors.NewInternalServerError("Cant parse the error.", nil, nil)
 		}
 
 		return nil, &restErr
@@ -123,7 +123,7 @@ func getAccessToken(accessTokenId string)(*accessToken, *errors.RestErr) {
 
 	var accessToken accessToken
 	if err := json.Unmarshal(response.Bytes(), &accessToken); err != nil {
-		return nil, errors.NewInternalServerError("Cant parse the accessToken response.", nil)
+		return nil, rest_errors.NewInternalServerError("Cant parse the accessToken response.", nil, nil)
 	}
 
 	return &accessToken, nil 
