@@ -112,7 +112,7 @@ func getAccessToken(accessTokenId string)(*accessToken, rest_errors.RestErr) {
 
 	//Some errors hapens
 	if response.StatusCode > 299 {
-		restErr, err := NewRestErrorFromBytes(response.Bytes())
+		restErr, err := rest_errors.NewRestErrorFromBytes(response.Bytes())
 		if err != nil {
 			return nil, rest_errors.NewInternalServerError("Cant parse the error.", nil, nil)
 		}
