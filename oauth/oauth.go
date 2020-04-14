@@ -117,7 +117,7 @@ func getAccessToken(accessTokenId string)(*accessToken, rest_errors.RestErr) {
 			return nil, rest_errors.NewInternalServerError("Cant parse the error.", nil, nil)
 		}
 
-		return nil, &restErr
+		return nil, restErr
 	}
 
 	var accessToken accessToken
