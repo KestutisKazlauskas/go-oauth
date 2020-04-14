@@ -66,7 +66,7 @@ func GetClienId(request *http.Request) int64 {
 
 }
 
-func Authenticate(request *http.Request) *rest_errors.RestErr {
+func Authenticate(request *http.Request) rest_errors.RestErr {
 	if request == nil {
 		return nil
 	}
