@@ -81,7 +81,7 @@ func Authenticate(request *http.Request) rest_errors.RestErr {
 
 	accessToken, err := getAccessToken(accessTokenId)
 	if err != nil {
-		if err.Status == http.StatusNotFound {
+		if err.Status() == http.StatusNotFound {
 			return nil
 		}
 		return err
@@ -102,7 +102,7 @@ func cleanRequest(request *http.Request) {
 	request.Header.Del(headerXUserId)
 }
 
-func getAccessToken(accessTokenId string)(*accessToken, *rest_errors.RestErr) {
+func getAccessToken(accessTokenId string)(*accessToken, rest_errors.RestErr) {
 	response := oauthRestClient.Get(fmt.Sprintf("/oauth/access_token/%s", accessTokenId))
 
 	//Tiemout happens
@@ -112,8 +112,7 @@ func getAccessToken(accessTokenId string)(*accessToken, *rest_errors.RestErr) {
 
 	//Some errors hapens
 	if response.StatusCode > 299 {
-		var restErr rest_errors.RestErr
-		err := json.Unmarshal(response.Bytes(), &restErr)
+		restErr, err := NewRestErrorFromBytes(response.Bytes())
 		if err != nil {
 			return nil, rest_errors.NewInternalServerError("Cant parse the error.", nil, nil)
 		}
